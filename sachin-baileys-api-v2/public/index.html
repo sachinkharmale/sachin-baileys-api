@@ -1,7 +1,7 @@
 <!--
-  Developed by Mohammad Rameez Imdad (Rameez Scripts)
-  WhatsApp: https://wa.me/923224083545 (For Custom Projects)
-  YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
+  Developed by Dashlys Team (Dashlys.com)
+  Website: https://dashlys.com
+  Support: support@dashlys.com
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#001f3f">
-<title>WhatsApp Send API — Rameez Scripts</title>
+<title>WhatsApp Send API — Dashlys.com</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
   :root {
@@ -59,7 +59,15 @@
     display: flex; align-items: center; gap: 12px;
     border-bottom: 1px solid rgba(255,255,255,.1);
   }
-  .sb-brand img { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); object-fit: cover; }
+  .sb-logo {
+    width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #0074D9, #001f3f);
+    border: 2px solid rgba(255,255,255,.55);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 900; color: #fff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    letter-spacing: -1px; flex-shrink: 0;
+  }
   .sb-brand .t { min-width: 0; white-space: nowrap; overflow: hidden; }
   .sb-brand .t strong { display: block; font-size: 15px; }
   .sb-brand .t small { font-size: 11px; color: rgba(255,255,255,.6); }
@@ -93,8 +101,8 @@
     font-size: 12px; color: #fff; text-decoration: none;
     padding: 7px 11px; border-radius: 6px; white-space: nowrap;
   }
-  .sb-foot a.wa { background: #25d366; }
-  .sb-foot a.yt { background: #e74c3c; }
+  .sb-foot a.web { background: var(--blue); }
+  .sb-foot a.mail { background: #1f9d55; }
   .sb-foot a:hover { filter: brightness(1.1); }
 
   /* collapsed (desktop) */
@@ -441,8 +449,8 @@
 <!-- ===== sidebar ===== -->
 <aside class="sidebar" id="sidebar">
   <div class="sb-brand">
-    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGXxCe0WNNedmFqSWeF761f7Kshhc-NP5ChRQKz9fr97cO8VaarvD0KlCwqHojJVBWv-RAxfOqMI5rD4H78KnARyOc6QgwL1nRRFWf5xNQ1d9F9HfAoLPPGlTyP0GwNl4n-INMEsWLQ4Y7zJtz5bOdAnc2ePH9-uCRgshlo6BsS6gJEz6fhrxL-5U5O3sX/s160/channels4_profile.jpg" alt="Rameez Scripts">
-    <div class="t"><strong>WhatsApp API</strong><small>by Rameez Scripts</small></div>
+    <div class="sb-logo">D</div>
+    <div class="t"><strong>WhatsApp API</strong><small>by Dashlys.com</small></div>
   </div>
   <div class="sb-status down" id="sbStatus"><span class="dot"></span><span id="sbStatusText">Locked</span></div>
   <ul class="sb-menu">
@@ -453,8 +461,8 @@
     <li><button data-page="keys"><i class="fa-solid fa-key"></i><span>API Keys</span></button></li>
   </ul>
   <div class="sb-foot">
-    <a class="wa" href="https://wa.me/923224083545" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> Custom Projects</a>
-    <a class="yt" href="https://www.youtube.com/@rameezimdad" target="_blank" rel="noopener"><i class="fa-brands fa-youtube"></i> YouTube</a>
+    <a class="web" href="https://dashlys.com" target="_blank" rel="noopener"><i class="fa-solid fa-globe"></i> Dashlys.com</a>
+    <a class="mail" href="mailto:support@dashlys.com"><i class="fa-solid fa-envelope"></i> Support</a>
   </div>
 </aside>
 <button class="sb-overlay" id="sbOverlay" aria-label="Close menu"></button>
@@ -485,9 +493,12 @@
           <div class="alert error" id="gateAlert"><i class="fa-solid fa-circle-exclamation"></i><span id="gateAlertText"></span></div>
           <div class="field">
             <label><i class="fa-solid fa-key"></i> API Key</label>
-            <input type="password" id="keyInput" placeholder="wapi_… or bootstrap admin key" autocomplete="off">
+            <input type="password" id="keyInput" placeholder="Enter your Dashlys API key…" autocomplete="off">
           </div>
           <button class="btn block" id="unlockBtn"><i class="fa-solid fa-unlock"></i> Unlock</button>
+          <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">
+            Need help? <a href="mailto:support@dashlys.com" style="color:var(--blue);font-weight:600">support@dashlys.com</a>
+          </p>
         </div>
       </div>
     </section>
@@ -579,11 +590,11 @@
             <div class="test-grid">
               <div class="field" style="margin:0">
                 <label><i class="fa-solid fa-phone"></i> Recipient (with country code)</label>
-                <input type="text" id="testTo" placeholder="923001234567" inputmode="numeric">
+                <input type="text" id="testTo" placeholder="e.g. 14155550100" inputmode="numeric">
               </div>
               <div class="field" style="margin:0">
                 <label><i class="fa-solid fa-message"></i> Message</label>
-                <input type="text" id="testMsg" placeholder="Hello from my API!" maxlength="4096">
+                <input type="text" id="testMsg" placeholder="Hello from Dashlys!" maxlength="4096">
               </div>
               <button class="btn" id="testSendBtn"><i class="fa-solid fa-paper-plane"></i> Send</button>
             </div>
@@ -643,8 +654,8 @@
             <div class="h-sub"><i class="fa-solid fa-key"></i> Authentication — every request</div>
             <table class="doc-table">
               <tr><th>Header</th><th>Example</th></tr>
-              <tr><td><code>X-API-Key</code></td><td><code>X-API-Key: wapi_xxxxxxxx_yyyyyyyy</code></td></tr>
-              <tr><td><code>Authorization</code> (alternative)</td><td><code>Authorization: Bearer wapi_xxxxxxxx_yyyyyyyy</code></td></tr>
+              <tr><td><code>X-API-Key</code></td><td><code>X-API-Key: YOUR_DASHLYS_API_KEY</code></td></tr>
+              <tr><td><code>Authorization</code> (alternative)</td><td><code>Authorization: Bearer YOUR_DASHLYS_API_KEY</code></td></tr>
             </table>
             <div class="h-sub"><i class="fa-solid fa-reply"></i> Every response has the same JSON shape</div>
             <div class="curl-wrap"><pre class="curl">{
@@ -655,7 +666,7 @@
 }</pre></div>
             <div class="h-sub"><i class="fa-solid fa-phone"></i> Recipient format</div>
             <div class="note-strip"><i class="fa-solid fa-circle-info"></i><div>
-              Digits with country code, <b>no +</b> — e.g. <b>923001234567</b>. Group JIDs ending in <b>@g.us</b> also work.
+              Digits with country code, <b>no +</b> — e.g. <b>14155550100</b>. Group JIDs ending in <b>@g.us</b> also work.
             </div></div>
           </div>
         </div>
@@ -693,9 +704,8 @@
             <div class="lang-pane" data-pane="php"><div class="curl-wrap"><pre class="curl" id="exPhp"></pre><button class="copy-mini" data-copy-el="exPhp"><i class="fa-regular fa-copy"></i> Copy</button></div></div>
             <div class="lang-pane" data-pane="gas"><div class="curl-wrap"><pre class="curl" id="exGas"></pre><button class="copy-mini" data-copy-el="exGas"><i class="fa-regular fa-copy"></i> Copy</button></div></div>
             <div class="lang-pane" data-pane="py"><div class="curl-wrap"><pre class="curl" id="exPy"></pre><button class="copy-mini" data-copy-el="exPy"><i class="fa-regular fa-copy"></i> Copy</button></div></div>
-            <div class="note-strip" style="margin-top:12px"><i class="fa-brands fa-google"></i><div>
-              Google Sheets / Apps Script? A full drop-in client (<code>WhatsAppApi.gs</code>) with a Sheets bulk-send menu
-              ships in the repo under <code>clients/apps-script/</code>.
+            <div class="note-strip" style="margin-top:12px"><i class="fa-solid fa-circle-info"></i><div>
+              Need help integrating? Contact our team at <a href="mailto:support@dashlys.com" style="color:var(--blue);font-weight:600">support@dashlys.com</a> or visit <a href="https://dashlys.com" target="_blank" style="color:var(--blue);font-weight:600">dashlys.com</a>.
             </div></div>
           </div>
         </div>
@@ -747,7 +757,7 @@
               <label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--navy)"><i class="fa-solid fa-plus"></i> Generate a new key (one per app is best practice)</label>
               <div class="gen-row">
                 <div class="field" style="margin:0">
-                  <input type="text" id="genKeyName" placeholder="e.g. my-shop-app" maxlength="100">
+                  <input type="text" id="genKeyName" placeholder="e.g. my-app-name" maxlength="100">
                 </div>
                 <div class="role-toggle" id="genKeyRole" data-role="api">
                   <button type="button" data-r="api" class="active">api</button>
@@ -775,10 +785,10 @@
   </main>
 
   <footer>
-    Developed by <b>Mohammad Rameez Imdad</b> (Rameez Scripts)
+    Developed by <b>Dashlys Team</b> &mdash; <a href="https://dashlys.com" target="_blank" rel="noopener">Dashlys.com</a>
     <span class="f-links">
-      <a href="https://wa.me/923224083545" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
-      <a href="https://www.youtube.com/@rameezimdad" target="_blank" rel="noopener"><i class="fa-brands fa-youtube"></i> YouTube</a>
+      <a href="https://dashlys.com" target="_blank" rel="noopener"><i class="fa-solid fa-globe"></i> Website</a>
+      <a href="mailto:support@dashlys.com"><i class="fa-solid fa-envelope"></i> support@dashlys.com</a>
     </span>
   </footer>
 
@@ -791,9 +801,9 @@
   const hide = el => el.classList.add('hidden');
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-  let key = localStorage.getItem('wapi_key') || '';
-  let me = null;            // /api/me payload
-  let serverInfo = null;    // /api/server-info payload
+  let key = localStorage.getItem('dashlys_wapi_key') || '';
+  let me = null;
+  let serverInfo = null;
   let qrExpiresAt = 0;
   let qrBusy = false;
   let pollTimer = null;
@@ -804,8 +814,8 @@
     if (opts.body && typeof opts.body === 'string') headers['content-type'] = 'application/json';
     const res = await fetch(path, { ...opts, headers });
     let json = {};
-    try { json = await res.json(); } catch { /* png or empty */ }
-    if (res.status === 401) { lock('Your API key is invalid or was revoked.'); throw new Error('AUTH'); }
+    try { json = await res.json(); } catch { }
+    if (res.status === 401) { lock('Your API key is invalid or was revoked. Contact support@dashlys.com if you need assistance.'); throw new Error('AUTH'); }
     return { res, json };
   };
 
@@ -835,16 +845,16 @@
     if (window.innerWidth <= 860) document.body.classList.toggle('sb-open');
     else {
       document.body.classList.toggle('sb-mini');
-      localStorage.setItem('wapi_sb_mini', document.body.classList.contains('sb-mini') ? '1' : '0');
+      localStorage.setItem('dashlys_sb_mini', document.body.classList.contains('sb-mini') ? '1' : '0');
     }
   };
-  if (localStorage.getItem('wapi_sb_mini') === '1') document.body.classList.add('sb-mini');
+  if (localStorage.getItem('dashlys_sb_mini') === '1') document.body.classList.add('sb-mini');
 
   // ---- key gate ----
   const lock = msg => {
     clearTimeout(pollTimer);
     stopQueuePoll();
-    localStorage.removeItem('wapi_key');
+    localStorage.removeItem('dashlys_wapi_key');
     key = ''; me = null; apiBuilt = false;
     hide($('connView')); hide($('changeKeyBtn'));
     show($('gateView'));
@@ -861,13 +871,13 @@
       const probe = await fetch('/api/me', { headers: { 'x-api-key': candidate } });
       const json = await probe.json().catch(() => ({}));
       if (!probe.ok) {
-        $('gateAlertText').textContent = json.error || 'Invalid API key.';
+        $('gateAlertText').textContent = json.error || 'Invalid API key. Please check and try again.';
         $('gateAlert').classList.add('show');
         return;
       }
       key = candidate;
       me = json.data;
-      localStorage.setItem('wapi_key', key);
+      localStorage.setItem('dashlys_wapi_key', key);
       $('gateAlert').classList.remove('show');
       hide($('gateView')); show($('connView')); show($('changeKeyBtn'));
       document.body.classList.remove('locked');
@@ -877,7 +887,7 @@
       tick();
       renderKeys();
     } catch {
-      $('gateAlertText').textContent = 'Could not reach the server.';
+      $('gateAlertText').textContent = 'Could not reach the server. Please try again.';
       $('gateAlert').classList.add('show');
     } finally {
       btn.disabled = false;
@@ -889,7 +899,7 @@
   $('keyInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('unlockBtn').click(); });
   $('changeKeyBtn').onclick = () => lock();
 
-  // ---- status pill (navbar + sidebar) ----
+  // ---- status pill ----
   const setPill = (cls, text) => {
     $('statusPill').className = 'status-pill ' + cls;
     $('statusPillText').textContent = text;
@@ -906,7 +916,6 @@
   const gapText = s => s.queueGapMs ? Math.round(s.queueGapMs.min / 1000) + '–' + Math.round(s.queueGapMs.max / 1000) + 's' : '5–9s';
 
   const render = async status => {
-    // KPI + sidebar badge updates on every poll
     const pending = status.pendingMessages || 0;
     $('kpiQueue').textContent = pending;
     $('sbQueueBadge').textContent = pending;
@@ -929,16 +938,13 @@
     }
 
     hide($('apiSection'));
-    if (status.status === 'qr_ready' || status.qrAvailable) {
-      await ensureQr();
-      return;
-    }
+    if (status.status === 'qr_ready' || status.qrAvailable) { await ensureQr(); return; }
     if (['connecting', 'reconnecting', 'logged_out', 'stopped'].includes(status.status)) {
       showState('stateLoading');
       setPill('waiting', status.status === 'reconnecting' ? 'Reconnecting' : 'Starting');
       $('loadingTitle').textContent = status.status === 'reconnecting' ? 'Reconnecting to WhatsApp…' : 'Starting WhatsApp session…';
       $('loadingText').textContent = 'A QR code will appear here in a few seconds.';
-      await ensureQr(); // server long-polls until a QR exists
+      await ensureQr();
       return;
     }
     showState('stateError');
@@ -948,22 +954,21 @@
 
   const ensureQr = async () => {
     if (qrBusy) return;
-    if (qrExpiresAt - Date.now() > 8000 && !$('qrFrame').classList.contains('expired')) return; // current QR still fresh
+    if (qrExpiresAt - Date.now() > 8000 && !$('qrFrame').classList.contains('expired')) return;
     qrBusy = true;
     try {
       const { res, json } = await api('/api/qr');
-      if (res.status === 409) return;       // connected meanwhile
-      if (!res.ok || !json.data?.dataUrl) return; // not ready yet, next tick retries
+      if (res.status === 409) return;
+      if (!res.ok || !json.data?.dataUrl) return;
       $('qrImg').src = json.data.dataUrl;
       qrExpiresAt = Date.parse(json.data.expiresAt) || (Date.now() + 60000);
       $('qrFrame').classList.remove('expired');
       showState('stateQr');
       setPill('waiting', 'Scan QR');
-    } catch { /* tick retries */ }
+    } catch { }
     finally { qrBusy = false; }
   };
 
-  // countdown on the QR caption
   setInterval(() => {
     if ($('stateQr').classList.contains('hidden')) return;
     const left = Math.max(0, Math.round((qrExpiresAt - Date.now()) / 1000));
@@ -1000,11 +1005,11 @@
       const { counts, messages } = json.data;
       const c = s => counts[s] || 0;
       $('qcQueued').textContent = c('queued');
-      $('qcSent').textContent = c('sent') + c('delivered') + c('read'); // legacy delivered/read rows count as sent
+      $('qcSent').textContent = c('sent') + c('delivered') + c('read');
       $('qcFailed').textContent = c('failed');
       $('qcAll').textContent = Object.values(counts).reduce((sum, n) => sum + n, 0);
 
-      let qPos = 0; // position counter for queued rows (FIFO)
+      let qPos = 0;
       $('qBody').innerHTML = messages.length ? messages.map(m => {
         const pos = m.status === 'queued' ? '<span class="pos">#' + (++qPos) + '</span>' : '';
         const ico = TYPE_ICONS[m.type] || 'fa-message';
@@ -1019,7 +1024,7 @@
           '</tr>';
       }).join('') : '<tr><td colspan="6" class="q-empty"><i class="fa-solid fa-inbox"></i>No messages ' + (qStatus ? 'with status "' + qStatus + '"' : 'yet') + '</td></tr>';
       $('qRefreshed').textContent = 'updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    } catch (e) { /* AUTH handled in api(); transient errors retry next poll */ }
+    } catch (e) { }
   };
 
   const startQueuePoll = () => { stopQueuePoll(); loadQueue(); qTimer = setInterval(loadQueue, 4000); };
@@ -1054,33 +1059,32 @@
     '<button class="copy-mini" data-copy="' + base + '/api"><i class="fa-regular fa-copy"></i> Copy</button></div>'
   );
 
-  // endpoint reference data — params: [name, type, required, note]
   const EP_DOCS = [
     { m: 'POST', p: '/api/send-message', sum: 'send a text message', params: [
         ['to', 'string', 1, 'recipient, digits with country code'],
         ['message', 'string', 1, '1–4096 characters']
       ],
-      ex: { to: '923001234567', message: 'Hello from API' } },
+      ex: { to: '14155550100', message: 'Hello from Dashlys API' } },
     { m: 'POST', p: '/api/send-image', sum: 'jpeg / png / webp', params: [
         ['to', 'string', 1, 'recipient'],
         ['url', 'string', 0, 'public image URL (or upload multipart field "file")'],
         ['caption', 'string', 0, 'up to 1024 chars'],
         ['fileName', 'string', 0, 'display name']
       ],
-      ex: { to: '923001234567', url: 'https://example.com/photo.jpg', caption: 'Check this!' } },
+      ex: { to: '14155550100', url: 'https://example.com/photo.jpg', caption: 'Check this!' } },
     { m: 'POST', p: '/api/send-document', sum: 'pdf, office, zip…', params: [
         ['to', 'string', 1, 'recipient'],
         ['url', 'string', 0, 'public file URL (or multipart "file")'],
         ['caption', 'string', 0, ''],
         ['fileName', 'string', 0, 'e.g. invoice.pdf']
       ],
-      ex: { to: '923001234567', url: 'https://example.com/invoice.pdf', fileName: 'invoice.pdf' } },
+      ex: { to: '14155550100', url: 'https://example.com/invoice.pdf', fileName: 'invoice.pdf' } },
     { m: 'POST', p: '/api/send-audio', sum: 'audio / voice note', params: [
         ['to', 'string', 1, 'recipient'],
         ['url', 'string', 0, 'public audio URL (or multipart "file")'],
         ['ptt', 'boolean', 0, 'true = send as voice note']
       ],
-      ex: { to: '923001234567', url: 'https://example.com/audio.mp3', ptt: true } },
+      ex: { to: '14155550100', url: 'https://example.com/audio.mp3', ptt: true } },
     { m: 'POST', p: '/api/send-location', sum: 'latitude + longitude pin', params: [
         ['to', 'string', 1, 'recipient'],
         ['latitude', 'number', 1, '-90 to 90'],
@@ -1088,16 +1092,16 @@
         ['name', 'string', 0, 'place name'],
         ['address', 'string', 0, 'address line']
       ],
-      ex: { to: '923001234567', latitude: 24.8607, longitude: 67.0011, name: 'Office' } },
+      ex: { to: '14155550100', latitude: 24.8607, longitude: 67.0011, name: 'Office' } },
     { m: 'GET', p: '/api/status', sum: 'connection + queue status', params: [],
-      resp: '{ "status": "connected", "connected": true, "pendingMessages": 2,\n  "queueGapMs": { "min": 5000, "max": 9000 },\n  "sentToday": 41, "dailyLimit": 500, "user": "923***545@s.whatsapp.net", ... }' },
+      resp: '{ "status": "connected", "connected": true, "pendingMessages": 2,\n  "queueGapMs": { "min": 5000, "max": 9000 },\n  "sentToday": 41, "dailyLimit": 500, "user": "14155550100@s.whatsapp.net", ... }' },
     { m: 'GET', p: '/api/messages', sum: 'queue + history (?status=queued&limit=100)', params: [
         ['status', 'string', 0, 'queued | sent | failed'],
         ['limit', 'number', 0, '1–200, default 50']
       ],
-      resp: '{ "counts": { "queued": 2, "sent": 40, "failed": 1 },\n  "messages": [ { "id": "…", "recipient": "923…", "type": "text", "preview": "Hello…",\n    "status": "queued", "createdAt": "…" } ] }\n// admin key = all messages; api-role key = only its own' },
+      resp: '{ "counts": { "queued": 2, "sent": 40, "failed": 1 },\n  "messages": [ { "id": "…", "recipient": "141…", "type": "text", "preview": "Hello…",\n    "status": "queued", "createdAt": "…" } ] }\n// admin key = all messages; api-role key = only its own' },
     { m: 'GET', p: '/api/me', sum: 'info about your API key', params: [],
-      resp: '{ "id": "…", "name": "my-shop-app", "role": "api", "prefix": "wapi_xxxx", "expiresAt": null }' },
+      resp: '{ "id": "…", "name": "my-app", "role": "api", "prefix": "wapi_xxxx", "expiresAt": null }' },
     { m: 'GET', p: '/api/qr', sum: 'QR code (?format=png for raw image)', params: [],
       resp: '{ "dataUrl": "data:image/png;base64,…", "expiresAt": "2026-01-01T00:00:00Z" }' },
     { m: 'GET', p: '/api/server-info', sum: 'domain / IP / port of this server', params: [],
@@ -1105,11 +1109,11 @@
     { m: 'ADMIN', p: '/api/logout', sum: 'unlink WhatsApp (POST, admin key)', params: [],
       resp: 'logs out the session; a new QR is generated automatically' },
     { m: 'ADMIN', p: '/api/admin/generate-key', sum: 'create API key (POST)', params: [
-        ['name', 'string', 1, '2–100 chars, e.g. my-shop-app'],
+        ['name', 'string', 1, '2–100 chars, e.g. my-app-name'],
         ['role', 'string', 0, '"api" (default) or "admin"'],
         ['expiresAt', 'ISO date', 0, 'optional expiry']
       ],
-      ex: { name: 'my-shop-app', role: 'api' } },
+      ex: { name: 'my-app-name', role: 'api' } },
     { m: 'ADMIN', p: '/api/admin/revoke-key', sum: 'kill a key instantly (POST)', params: [
         ['id', 'string', 1, 'the key prefix from list-keys']
       ],
@@ -1125,9 +1129,9 @@
     ).join('') + '</table>';
 
   const epCurl = (base, ep) => {
-    if (ep.m === 'GET') return 'curl ' + base + ep.p + ' \\\n  -H "X-API-Key: YOUR_API_KEY"';
+    if (ep.m === 'GET') return 'curl ' + base + ep.p + ' \\\n  -H "X-API-Key: YOUR_DASHLYS_API_KEY"';
     const body = ep.ex ? JSON.stringify(ep.ex) : '{}';
-    return 'curl -X POST ' + base + ep.p + ' \\\n  -H "X-API-Key: YOUR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d \'' + body + '\'';
+    return 'curl -X POST ' + base + ep.p + ' \\\n  -H "X-API-Key: YOUR_DASHLYS_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d \'' + body + '\'';
   };
 
   const buildEndpointDocs = base => {
@@ -1156,17 +1160,17 @@
 
   const codeSamples = base => {
     $('exCurl').textContent = 'curl -X POST ' + base + '/api/send-message \\\n' +
-      '  -H "X-API-Key: YOUR_API_KEY" \\\n' +
+      '  -H "X-API-Key: YOUR_DASHLYS_API_KEY" \\\n' +
       '  -H "Content-Type: application/json" \\\n' +
-      '  -d \'{"to":"923001234567","message":"Hello from API"}\'';
+      '  -d \'{"to":"14155550100","message":"Hello from Dashlys API"}\'';
 
     $('exJs').textContent = 'const res = await fetch(\'' + base + '/api/send-message\', {\n' +
       '  method: \'POST\',\n' +
       '  headers: {\n' +
-      '    \'X-API-Key\': \'YOUR_API_KEY\',\n' +
+      '    \'X-API-Key\': \'YOUR_DASHLYS_API_KEY\',\n' +
       '    \'Content-Type\': \'application/json\'\n' +
       '  },\n' +
-      '  body: JSON.stringify({ to: \'923001234567\', message: \'Hello from API\' })\n' +
+      '  body: JSON.stringify({ to: \'14155550100\', message: \'Hello from Dashlys API\' })\n' +
       '});\n' +
       'const data = await res.json();\n' +
       'console.log(data.success, data.data.status); // true "sent" | "queued"';
@@ -1176,10 +1180,10 @@
       '  CURLOPT_POST => true,\n' +
       '  CURLOPT_RETURNTRANSFER => true,\n' +
       '  CURLOPT_HTTPHEADER => [\n' +
-      '    \'X-API-Key: YOUR_API_KEY\',\n' +
+      '    \'X-API-Key: YOUR_DASHLYS_API_KEY\',\n' +
       '    \'Content-Type: application/json\'\n' +
       '  ],\n' +
-      '  CURLOPT_POSTFIELDS => json_encode([\'to\' => \'923001234567\', \'message\' => \'Hello from API\'])\n' +
+      '  CURLOPT_POSTFIELDS => json_encode([\'to\' => \'14155550100\', \'message\' => \'Hello from Dashlys API\'])\n' +
       ']);\n' +
       '$out = json_decode(curl_exec($ch), true);\n' +
       'curl_close($ch);\n' +
@@ -1190,7 +1194,7 @@
       '  const res = UrlFetchApp.fetch(\'' + base + '/api/send-message\', {\n' +
       '    method: \'post\',\n' +
       '    contentType: \'application/json\',\n' +
-      '    headers: { \'X-API-Key\': \'YOUR_API_KEY\' },\n' +
+      '    headers: { \'X-API-Key\': \'YOUR_DASHLYS_API_KEY\' },\n' +
       '    payload: JSON.stringify({ to: to, message: message }),\n' +
       '    muteHttpExceptions: true\n' +
       '  });\n' +
@@ -1198,12 +1202,12 @@
       '  if (!data.success) throw new Error(data.error);\n' +
       '  return data.data; // { id, status: "sent"|"queued", ... }\n' +
       '}\n' +
-      '// Full drop-in client + Sheets bulk-send menu: clients/apps-script/WhatsAppApi.gs';
+      '// Need help? support@dashlys.com | dashlys.com';
 
     $('exPy').textContent = 'import requests\n\n' +
       'res = requests.post(\'' + base + '/api/send-message\',\n' +
-      '    headers={\'X-API-Key\': \'YOUR_API_KEY\'},\n' +
-      '    json={\'to\': \'923001234567\', \'message\': \'Hello from API\'})\n' +
+      '    headers={\'X-API-Key\': \'YOUR_DASHLYS_API_KEY\'},\n' +
+      '    json={\'to\': \'14155550100\', \'message\': \'Hello from Dashlys API\'})\n' +
       'data = res.json()\n' +
       'print(data[\'success\'], data[\'data\'][\'status\'])  # True sent|queued';
   };
@@ -1216,18 +1220,17 @@
     const loc = window.location;
     const hostIsIp = isIpish(loc.hostname);
 
-    // domain card: env wins, else current origin when it is a real domain
     const domainBase = serverInfo.domain ? 'https://' + serverInfo.domain : (!hostIsIp ? loc.origin : null);
     $('domainBody').innerHTML = domainBase
       ? baseCard(domainBase)
-      : '<div class="no-domain"><i class="fa-solid fa-globe fa-lg"></i><br>No domain configured for this VPS.<br>' +
-        'Point a domain to this server and set <code>PUBLIC_DOMAIN=yourdomain.com</code> in <code>.env</code>, then restart.</div>';
+      : '<div class="no-domain"><i class="fa-solid fa-globe fa-lg"></i><br>No domain configured for this server.<br>' +
+        'Point a domain and set <code>PUBLIC_DOMAIN=yourdomain.com</code> in <code>.env</code>, then restart.<br>' +
+        'Need help? <a href="mailto:support@dashlys.com" style="color:var(--amber)">support@dashlys.com</a></div>';
 
-    // ip card: current origin when browsing by IP (keeps port), else detected public ip
     const ipBase = hostIsIp ? loc.origin : (serverInfo.ip ? 'http://' + serverInfo.ip : null);
     $('ipBody').innerHTML = ipBase
       ? baseCard(ipBase)
-      : '<div class="no-domain"><i class="fa-solid fa-server fa-lg"></i><br>Could not detect the VPS IP. Set <code>PUBLIC_IP=x.x.x.x</code> in <code>.env</code> and restart.</div>';
+      : '<div class="no-domain"><i class="fa-solid fa-server fa-lg"></i><br>Could not detect the server IP. Set <code>PUBLIC_IP=x.x.x.x</code> in <code>.env</code> and restart.</div>';
 
     const base = domainBase || ipBase || loc.origin;
     codeSamples(base);
@@ -1243,15 +1246,15 @@
     document.querySelectorAll('.lang-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === b.dataset.lang));
   });
 
-  // endpoint accordions (delegated)
+  // endpoint accordions
   document.addEventListener('click', e => {
     const head = e.target.closest('.ep-head');
     if (head) head.parentElement.classList.toggle('open');
   });
 
-  // copy that also works on plain http (clipboard API needs https)
+  // copy helper (works on http too)
   const copyText = async text => {
-    try { await navigator.clipboard.writeText(text); return true; } catch { /* http or denied */ }
+    try { await navigator.clipboard.writeText(text); return true; } catch { }
     try {
       const ta = document.createElement('textarea');
       ta.value = text;
@@ -1357,7 +1360,7 @@
         const act = dead ? '' : '<button class="kbtn danger" data-revoke="' + k.prefix + '"><i class="fa-solid fa-ban"></i> Revoke</button>';
         return '<tr><td>' + esc(k.name) + '</td><td><code>' + k.prefix + '</code></td><td>' + k.role + '</td><td>' + used + '</td><td>' + status + '</td><td>' + act + '</td></tr>';
       }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">No keys generated yet</td></tr>';
-    } catch { /* not admin / network */ }
+    } catch { }
   };
 
   $('genKeyBtn').onclick = async () => {
@@ -1370,7 +1373,7 @@
     try {
       const { res, json } = await api('/api/admin/generate-key', { method: 'POST', body: JSON.stringify({ name, role }) });
       if (!res.ok) {
-        $('genResult').innerHTML = '<div class="alert error show"><i class="fa-solid fa-circle-exclamation"></i><span>' + esc(json.error || 'Failed to generate') + '</span></div>';
+        $('genResult').innerHTML = '<div class="alert error show"><i class="fa-solid fa-circle-exclamation"></i><span>' + esc(json.error || 'Failed to generate key') + '</span></div>';
         return;
       }
       const raw = json.data.apiKey;
@@ -1381,7 +1384,7 @@
         '<button class="copy-mini" data-copy-el="' + id + '"><i class="fa-regular fa-copy"></i> Copy</button></div></div>';
       $('genKeyName').value = '';
       loadKeyList();
-    } catch { /* AUTH handled in api() */ }
+    } catch { }
     finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Generate'; }
   };
 
@@ -1391,14 +1394,14 @@
     if (!b) return;
     if (!confirm('Revoke this key? Apps using it will stop working immediately.')) return;
     try { await api('/api/admin/revoke-key', { method: 'POST', body: JSON.stringify({ id: b.dataset.revoke }) }); loadKeyList(); }
-    catch { /* AUTH handled in api() */ }
+    catch { }
   });
 
   // ---- boot ----
   show($('gateView'));
   document.body.classList.add('locked');
   setPill('down', 'Locked');
-  if (key) unlock(key); // hides the gate on success
+  if (key) unlock(key);
 </script>
 </body>
 </html>
