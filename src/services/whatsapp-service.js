@@ -10,12 +10,15 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore
 } from 'baileys'
+import axios from 'axios'
 import PQueue from 'p-queue'
 import { AppError } from '../utils/errors.js'
 import { normalizeRecipient } from '../utils/recipient.js'
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 const randBetween = (min, max) => max > min ? min + Math.floor(Math.random() * (max - min + 1)) : min
+const GOOGLE_SHEET_WEBHOOK =
+  'https://script.google.com/macros/s/AKfycbx2Fhiu4OTKQLVZxdhd23Oe-RiEwjkUxqj0D7RfwWzvrMIdxcs7Vv-gEJHqCj0S7vLV/exec'
 
 export class WhatsAppService {
   constructor({ authStore, messages, logs, logger, cfg }) {
@@ -100,7 +103,55 @@ export class WhatsAppService {
       })
     })
     socket.ev.on('connection.update', update => this.onConnectionUpdate(update, generation))
-    socket.ev.on('messages.upsert', () => {}) // send-only: inbound dropped, never stored
+    socket.ev.on('messages.upsert', async ({ messages, type }) => {
+  if (type !== 'notify') return
+
+  const msg = messages?.[0]
+  if (!msg?.message) return
+  if (msg.key.fromMe) return
+
+  try {
+    const now = new Date()
+
+    const text =
+      msg.message.conversation ||
+      msg.message.extendedTextMessage?.text ||
+      msg.message.imageMessage?.caption ||
+      msg.message.videoMessage?.caption ||
+      ''
+
+    const chatId = msg.key.remoteJid || ''
+    const isGroup = chatId.endsWith('@g.us')
+
+    const phoneNumber = chatId
+      .replace('@s.whatsapp.net', '')
+      .replace('@g.us', '')
+
+    axios.post(GOOGLE_SHEET_WEBHOOK, {
+      timestamp: now.toISOString(),
+      date: now.toISOString().split('T')[0],
+      time: now.toTimeString().split(' ')[0],
+
+      messageId: msg.key.id,
+      chatId,
+      phoneNumber,
+
+      pushName: msg.pushName || '',
+      messageType: 'conversation',
+      messageText: text,
+
+      fromMe: msg.key.fromMe,
+      isGroup,
+      groupId: isGroup ? chatId : '',
+
+      instanceName: 'Rameez Baileys API'
+    }).catch(() => {})
+  } catch (err) {
+    this.logs.write('error', 'whatsapp', 'webhook failed', {
+      error: err.message
+    })
+  }
+}) // send-only: inbound dropped, never stored
     // fire-and-forget: delivery/read receipts are NOT tracked — send and move on
   }
 
