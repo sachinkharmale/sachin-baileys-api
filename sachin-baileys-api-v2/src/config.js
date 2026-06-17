@@ -20,7 +20,7 @@ const boolTrue = z
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().trim().default('127.0.0.1'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  PORT: z.coerce.number().int().min(1).max(65535),
   TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(1),
   ADMIN_API_KEY: z.string().min(32),
   API_KEY_PEPPER: z.string().min(32),
@@ -52,11 +52,19 @@ const schema = z.object({
 })
 
 export const loadConfig = (env = process.env) => {
-  const parsed = schema.safeParse(env)
   if (!parsed.success) {
-    const details = parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join('; ')
-    throw new Error(`Invalid environment configuration: ${details}`)
-  }
+  const details = parsed.error.issues
+    .map(issue => `${issue.path.join('.')}: ${issue.message}`)
+    .join('; ')
+  throw new Error(`Invalid environment configuration: ${details}`)
+}
+
+const cfg = parsed.data
+
+// 🔥 HARD GUARD (NO FALLBACK EVER)
+if (!env.PORT) {
+  throw new Error("❌ PORT is missing in .env (server will NOT start without it)")
+}
 
   const cfg = parsed.data
   return {
