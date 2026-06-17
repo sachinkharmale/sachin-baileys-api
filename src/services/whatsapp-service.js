@@ -127,31 +127,33 @@ export class WhatsAppService {
       .replace('@s.whatsapp.net', '')
       .replace('@g.us', '')
 
-    axios.post(GOOGLE_SHEET_WEBHOOK, {
-      timestamp: now.toISOString(),
-      date: now.toISOString().split('T')[0],
-      time: now.toTimeString().split(' ')[0],
+    axios.post(
+  GOOGLE_SHEET_WEBHOOK,
+  {
+    timestamp: now.toISOString(),
+    date: now.toISOString().split('T')[0],
+    time: now.toTimeString().split(' ')[0],
 
-      messageId: msg.key.id,
-      chatId,
-      phoneNumber,
+    messageId: msg.key.id,
+    chatId,
+    phoneNumber,
 
-      pushName: msg.pushName || '',
-      messageType: 'conversation',
-      messageText: text,
+    pushName: msg.pushName || "",
+    messageType: "conversation",
+    messageText: text,
 
-      fromMe: msg.key.fromMe,
-      isGroup,
-      groupId: isGroup ? chatId : '',
+    fromMe: msg.key.fromMe,
+    isGroup,
+    groupId: isGroup ? chatId : "",
 
-      instanceName: 'Rameez Baileys API'
-    }).catch(() => {})
-  } catch (err) {
-    this.logs.write('error', 'whatsapp', 'webhook failed', {
-      error: err.message
-    })
+    instanceName: this.cfg?.instanceName || "baileys-api"
+  },
+  {
+    headers: {
+      "Content-Type": "application/json"
+    }
   }
-}) // send-only: inbound dropped, never stored
+).catch(() => {}) // send-only: inbound dropped, never stored
     // fire-and-forget: delivery/read receipts are NOT tracked — send and move on
   }
 
