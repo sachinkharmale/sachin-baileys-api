@@ -1,6 +1,6 @@
 <!--
-  Developed by Sachin Kharmale
-  Email: sachin@post.com
+  Developed by Crafttrends LLP
+  Email: mis@ppbafnaventures.com
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#001f3f">
-<title>WhatsApp API Dashboard — Sachin Kharmale</title>
+<title>WhatsApp API Dashboard — Crafttrends LLP</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -189,7 +189,7 @@ main{flex:1;width:100%;padding:24px 22px 40px}
 .base-url{display:flex;align-items:center;gap:10px;background:var(--navy);color:#7fd4ff;font-family:Consolas,Menlo,monospace;font-size:13.5px;padding:11px 14px;border-radius:8px;word-break:break-all}
 .copy-mini{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:5px;padding:4px 9px;font-size:11.5px;cursor:pointer;flex-shrink:0;margin-left:auto}
 .copy-mini:hover{background:rgba(255,255,255,.25)}
-pre.curl{background:#0b2238;color:#d9e6f2;border-radius:9px;padding:14px 15px;font-size:12.3px;line-height:1.65;font-family:Consolas,Menlo,monospace;overflow-x:auto;white-space:pre}
+pre.curl{background:#0b2238;color:#d9e6f2;border-radius:999px;padding:14px 15px;font-size:12.3px;line-height:1.65;font-family:Consolas,Menlo,monospace;overflow-x:auto;white-space:pre}
 .curl-wrap{position:relative}.curl-wrap .copy-mini{position:absolute;top:9px;right:9px;margin:0}
 .no-domain{background:var(--amber-soft);color:var(--amber);border:1px dashed #e4c98e;border-radius:9px;padding:18px 16px;font-size:13.5px;line-height:1.65;text-align:center}
 .no-domain code{background:#fff;padding:2px 7px;border-radius:4px;font-size:12.5px}
@@ -317,7 +317,7 @@ footer .f-links{display:inline-flex;gap:16px;margin-left:10px}
 .page{display:none}.page.active{display:block}
 
 @media(max-width:980px){.kpi-row{grid-template-columns:repeat(2,1fr)}.stat-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}}
-@media(max-width:860px){.sidebar{transform:translateX(-100%);width:var(--sb-w)!important}body.sb-open .sidebar{transform:translateX(0)}body.sb-open .sb-overlay{display:block}body.sb-mini .sb-brand .t,body.sb-mini .sb-status,body.sb-mini .sb-menu .sec,body.sb-mini .sb-menu button span,body.sb-mini .sb-foot{display:revert}body.sb-mini .sb-menu button{justify-content:flex-start}.shell,body.sb-mini .shell{margin-left:0}.api-grid{grid-template-columns:1fr}.test-grid{grid-template-columns:1fr}.gen-row{grid-template-columns:1fr}.status-pill span:last-child{display:none}.nav-page .crumb{display:none}}
+@media(max-width:860px){.sidebar{transform:translateX(-100%);width:var(--sb-w)!important}body.sb-open .sidebar{transform:translateX(0)}body.sb-open .sb-overlay{display:block}body.sb-mini .sb-brand .t,body.sb-mini .sb-status,body.sb-mini .sb-menu .sec,body.sb-mini .sb-menu button span,body.sb-mini .sb-user .ut,body.sb-mini .sb-foot{display:revert}body.sb-mini .sb-menu button{justify-content:flex-start}.shell,body.sb-mini .shell{margin-left:0}.api-grid{grid-template-columns:1fr}.test-grid{grid-template-columns:1fr}.gen-row{grid-template-columns:1fr}.status-pill span:last-child{display:none}.nav-page .crumb{display:none}}
 @media(max-width:520px){.kpi-row{grid-template-columns:1fr}.stat-grid{grid-template-columns:1fr 1fr}.pin-row input{width:44px;height:50px;font-size:20px!important}.login-box{padding:30px 20px}}
 </style>
 </head>
@@ -326,7 +326,7 @@ footer .f-links{display:inline-flex;gap:16px;margin-left:10px}
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <div class="login-logo">SK</div>
+    <div class="login-logo">CT</div>
     <h2>Welcome Back</h2>
     <p class="sub">Enter your 4-digit PIN to access the dashboard</p>
     <div class="login-lockout" id="loginLockout"><i class="fa-solid fa-lock"></i> Too many attempts. Wait <span id="lockTimer">30</span>s.</div>
@@ -339,15 +339,15 @@ footer .f-links{display:inline-flex;gap:16px;margin-left:10px}
     </div>
     <button class="login-btn" id="loginBtn" disabled><i class="fa-solid fa-right-to-bracket"></i> Login</button>
     <p class="login-attempts" id="loginAttempts">Attempts remaining: <b>5</b></p>
-    <p class="login-footer">By <a href="mailto:sachin@post.com">Sachin Kharmale</a></p>
+    <p class="login-footer">By <a href="mailto:mis@ppbafnaventures.com">Crafttrends LLP</a></p>
   </div>
 </div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sb-brand">
-    <div class="sb-logo">SK</div>
-    <div class="t"><strong>WhatsApp API</strong><small>by Sachin Kharmale</small></div>
+    <div class="sb-logo">CT</div>
+    <div class="t"><strong>WhatsApp API</strong><small>by Crafttrends LLP</small></div>
   </div>
   <div class="sb-user">
     <div class="sb-avatar"><i class="fa-solid fa-user" style="font-size:13px"></i></div>
@@ -367,7 +367,7 @@ footer .f-links{display:inline-flex;gap:16px;margin-left:10px}
   </ul>
   <div class="sb-foot">
     <button class="logout-btn" id="appLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i><span>Sign Out</span></button>
-    <div class="links"><a class="mail" href="mailto:sachin@post.com"><i class="fa-solid fa-envelope"></i> sachin@post.com</a></div>
+    <div class="links"><a class="mail" href="mailto:mis@ppbafnaventures.com"><i class="fa-solid fa-envelope"></i> mis@ppbafnaventures.com</a></div>
   </div>
 </aside>
 <button class="sb-overlay" id="sbOverlay" aria-label="Close menu"></button>
@@ -564,7 +564,7 @@ footer .f-links{display:inline-flex;gap:16px;margin-left:10px}
           <table class="doc-table">
             <tr><td><b>Uptime</b></td><td id="sysUptime">calculating…</td></tr>
             <tr><td><b>Sheet Data</b></td><td id="sheetStatus">not loaded</td></tr>
-            <tr><td><b>Developer</b></td><td>Sachin Kharmale — <a href="mailto:sachin@post.com" style="color:var(--blue)">sachin@post.com</a></td></tr>
+            <tr><td><b>Developer</b></td><td>Crafttrends LLP — <a href="mailto:mis@ppbafnaventures.com" style="color:var(--blue)">mis@ppbafnaventures.com</a></td></tr>
           </table>
         </div></div>
       </div>
@@ -573,7 +573,7 @@ footer .f-links{display:inline-flex;gap:16px;margin-left:10px}
   </main>
 
   <footer>
-    Developed by <b>Sachin Kharmale</b> &mdash; <a href="mailto:sachin@post.com">sachin@post.com</a>
+    Developed by <b>Crafttrends LLP</b> &mdash; <a href="mailto:mis@ppbafnaventures.com">mis@ppbafnaventures.com</a>
   </footer>
 </div>
 
@@ -951,17 +951,17 @@ const showPage=name=>{
 
 document.querySelectorAll('.sb-menu button[data-page]').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 $('sbOverlay').onclick=()=>document.body.classList.remove('sb-open');
-$('burger').onclick=()=>{if(window.innerWidth<=860)document.body.classList.toggle('sb-open');else{document.body.classList.toggle('sb-mini');localStorage.setItem('sk_sb_mini',document.body.classList.contains('sb-mini')?'1':'0');}};
-if(localStorage.getItem('sk_sb_mini')==='1') document.body.classList.add('sb-mini');
+$('burger').onclick=()=>{if(window.innerWidth<=860)document.body.classList.toggle('sb-open');else{document.body.classList.toggle('sb-mini');localStorage.setItem('ct_sb_mini',document.body.classList.contains('sb-mini')?'1':'0');}};
+if(localStorage.getItem('ct_sb_mini')==='1') document.body.classList.add('sb-mini');
 $('appLogoutBtn').onclick=()=>{if(confirm('Sign out?'))location.reload();};
 
 // ==== API KEY GATE ====
-let key=localStorage.getItem('sk_wapi_key')||'';
+let key=localStorage.getItem('ct_wapi_key')||'';
 let me=null, serverInfo=null, qrExpiresAt=0, qrBusy=false, pollTimer=null;
 
 const api=async(path,opts={})=>{const headers={'x-api-key':key,...(opts.headers||{})};if(opts.body&&typeof opts.body==='string')headers['content-type']='application/json';const res=await fetch(path,{...opts,headers});let json={};try{json=await res.json();}catch{}if(res.status===401){doLock('API key invalid or revoked.');throw new Error('AUTH');}return{res,json};};
 
-const doLock=msg=>{clearTimeout(pollTimer);stopQueuePoll();localStorage.removeItem('sk_wapi_key');key='';me=null;apiBuilt=false;hide($('connView'));hide($('changeKeyBtn'));show($('gateView'));setPill('down','Locked');if(msg){$('gateAlertText').textContent=msg;$('gateAlert').classList.add('show');}};
+const doLock=msg=>{clearTimeout(pollTimer);stopQueuePoll();localStorage.removeItem('ct_wapi_key');key='';me=null;apiBuilt=false;hide($('connView'));hide($('changeKeyBtn'));show($('gateView'));setPill('down','Locked');if(msg){$('gateAlertText').textContent=msg;$('gateAlert').classList.add('show');}};
 
 const doUnlock=async candidate=>{
   const btn=$('unlockBtn');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-circle-notch spin"></i> Checking…';
@@ -969,7 +969,7 @@ const doUnlock=async candidate=>{
     const probe=await fetch('/api/me',{headers:{'x-api-key':candidate}});
     const json=await probe.json().catch(()=>({}));
     if(!probe.ok){$('gateAlertText').textContent=json.error||'Invalid key.';$('gateAlert').classList.add('show');return;}
-    key=candidate;me=json.data;localStorage.setItem('sk_wapi_key',key);
+    key=candidate;me=json.data;localStorage.setItem('ct_wapi_key',key);
     $('gateAlert').classList.remove('show');hide($('gateView'));show($('connView'));show($('changeKeyBtn'));
     $('keyWho').innerHTML='<i class="fa-solid fa-id-badge"></i> '+(me.name||'key')+' · '+me.role;
     $('kpiRole').textContent=me.role;$('kpiKeyName').textContent=me.name||'key';
