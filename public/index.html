@@ -189,7 +189,7 @@ main{flex:1;width:100%;padding:24px 22px 40px}
 .base-url{display:flex;align-items:center;gap:10px;background:var(--navy);color:#7fd4ff;font-family:Consolas,Menlo,monospace;font-size:13.5px;padding:11px 14px;border-radius:8px;word-break:break-all}
 .copy-mini{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:5px;padding:4px 9px;font-size:11.5px;cursor:pointer;flex-shrink:0;margin-left:auto}
 .copy-mini:hover{background:rgba(255,255,255,.25)}
-pre.curl{background:#0b2238;color:#d9e6f2;border-radius:999px;padding:14px 15px;font-size:12.3px;line-height:1.65;font-family:Consolas,Menlo,monospace;overflow-x:auto;white-space:pre}
+pre.curl{background:#0b2238;color:#d9e6f2;border-radius:9px;padding:14px 15px;font-size:12.3px;line-height:1.65;font-family:Consolas,Menlo,monospace;overflow-x:auto;white-space:pre}
 .curl-wrap{position:relative}.curl-wrap .copy-mini{position:absolute;top:9px;right:9px;margin:0}
 .no-domain{background:var(--amber-soft);color:var(--amber);border:1px dashed #e4c98e;border-radius:9px;padding:18px 16px;font-size:13.5px;line-height:1.65;text-align:center}
 .no-domain code{background:#fff;padding:2px 7px;border-radius:4px;font-size:12.5px}
@@ -585,7 +585,7 @@ const hide=el=>el.classList.add('hidden');
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
 
 // ==== GOOGLE SHEET DATA ====
-const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIes2nm9G4mn886-doXN6SDqjeqn0to8Fi-ffxsB4KtIzb6NUy-Fcu_vfuM_UwvwpCGI2qGH3Iog3M/pub?gid=0&single=true&output=csv';
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPFBCl_D5s4WfSM0f9OQW80X3W25Wzoq1V3F54hG9fnqJ2kNdMRzm0buPzbdz1DCz2X713XTH1yNeZ/pub?output=csv';
 let sheetData = [];
 let sheetLoaded = false;
 
@@ -594,20 +594,36 @@ async function loadSheetData() {
     const res = await fetch(SHEET_CSV);
     const csv = await res.text();
     const parsed = Papa.parse(csv, { header: true, skipEmptyLines: true });
-    sheetData = parsed.data.map(row => ({
-      timestamp: row['Timestamp'] || '',
-      date: row['Date'] || '',
-      time: row['Time'] || '',
-      messageId: row['Message ID'] || '',
-      chatId: row['Chat ID'] || '',
-      phone: row['Phone Number'] || '',
-      pushName: row['Push Name'] || '',
-      messageType: (row['Message Type'] || 'text').toLowerCase(),
-      messageText: row['Message Text'] || '',
-      fromMe: (row['From Me'] || '').toLowerCase() === 'true',
-      isGroup: (row['Is Group'] || '').toLowerCase() === 'true',
-      groupId: row['Group ID'] || ''
-    }));
+    sheetData = parsed.data.map(row => {
+      const ts = row['Timestamp'] || '';
+      let datePart = '';
+      let timePart = '';
+      if (ts) {
+        const dt = new Date(ts);
+        if (!isNaN(dt.getTime())) {
+          datePart = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+          timePart = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0') + ':' + String(dt.getSeconds()).padStart(2,'0');
+        } else {
+          const parts = ts.split(/[\sT]+/);
+          datePart = parts[0] || '';
+          timePart = parts[1] || '';
+        }
+      }
+      return {
+        timestamp: ts,
+        date: datePart,
+        time: timePart,
+        messageId: row['Message ID'] || '',
+        chatId: row['Phone Number'] || '',
+        phone: row['Phone Number'] || '',
+        pushName: row['Contact Name'] || row['Phone Number'] || '',
+        messageType: (row['Message Type'] || 'text').toLowerCase(),
+        messageText: row['Text Content'] || row['Caption'] || '',
+        fromMe: true, // Configured for sent message tracking
+        isGroup: false,
+        groupId: ''
+      };
+    });
     sheetLoaded = true;
     $('sheetStatus').textContent = sheetData.length + ' messages loaded';
     updateDashboardFromSheet();
@@ -1018,7 +1034,7 @@ setInterval(()=>{if($('stateQr').classList.contains('hidden'))return;const left=
 
 const tick=async()=>{clearTimeout(pollTimer);try{const{json}=await api('/api/status');if(json.success)await render(json.data);}catch(e){if(e.message==='AUTH')return;}pollTimer=setTimeout(tick,4000);};
 
-// ==== QUEUE ====
+// ==== PLAYGROUND QUEUE ====
 const TYPE_ICONS={text:'fa-message',image:'fa-image',document:'fa-file',audio:'fa-microphone',location:'fa-location-dot'};
 const mTime=iso=>{const d=new Date(iso);return new Date().toDateString()===d.toDateString()?d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):d.toLocaleString([],{dateStyle:'short',timeStyle:'short'});};
 
