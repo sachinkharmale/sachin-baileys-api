@@ -170,7 +170,7 @@ main{flex:1;width:100%;padding:24px 22px 40px}
 .qr-expired-overlay{display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;font-size:13px;font-weight:600;color:var(--navy)}
 .qr-frame.expired .qr-expired-overlay{display:flex}
 .qr-meta{font-size:12.5px;color:var(--muted);margin-bottom:12px}
-.qr-steps{text-align:left;background:var(--blue-soft);border-radius:9px;padding:14px 18px;font-size:13.5px;line-height:2;color:var(--navy)}
+.qr-steps{text-align:left;background:var(--blue-soft);border-radius:999px;padding:14px 18px;font-size:13.5px;line-height:2;color:var(--navy)}
 .qr-steps i{width:20px;color:var(--blue)}
 .connected-box{text-align:center;padding:6px 0}
 .connected-box .ok-ring{width:86px;height:86px;border-radius:50%;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:40px;margin:4px auto 14px}
@@ -189,11 +189,11 @@ main{flex:1;width:100%;padding:24px 22px 40px}
 .base-url{display:flex;align-items:center;gap:10px;background:var(--navy);color:#7fd4ff;font-family:Consolas,Menlo,monospace;font-size:13.5px;padding:11px 14px;border-radius:8px;word-break:break-all}
 .copy-mini{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:5px;padding:4px 9px;font-size:11.5px;cursor:pointer;flex-shrink:0;margin-left:auto}
 .copy-mini:hover{background:rgba(255,255,255,.25)}
-pre.curl{background:#0b2238;color:#d9e6f2;border-radius:9px;padding:14px 15px;font-size:12.3px;line-height:1.65;font-family:Consolas,Menlo,monospace;overflow-x:auto;white-space:pre}
+pre.curl{background:#0b2238;color:#d9e6f2;border-radius:999px;padding:14px 15px;font-size:12.3px;line-height:1.65;font-family:Consolas,Menlo,monospace;overflow-x:auto;white-space:pre}
 .curl-wrap{position:relative}.curl-wrap .copy-mini{position:absolute;top:9px;right:9px;margin:0}
-.no-domain{background:var(--amber-soft);color:var(--amber);border:1px dashed #e4c98e;border-radius:9px;padding:18px 16px;font-size:13.5px;line-height:1.65;text-align:center}
+.no-domain{background:var(--amber-soft);color:var(--amber);border:1px dashed #e4c98e;border-radius:999px;padding:18px 16px;font-size:13.5px;line-height:1.65;text-align:center}
 .no-domain code{background:#fff;padding:2px 7px;border-radius:4px;font-size:12.5px}
-.note-strip{display:flex;gap:10px;align-items:flex-start;background:var(--blue-soft);border-radius:9px;padding:13px 15px;font-size:13px;color:var(--navy);line-height:1.6}
+.note-strip{display:flex;gap:10px;align-items:flex-start;background:var(--blue-soft);border-radius:999px;padding:13px 15px;font-size:13px;color:var(--navy);line-height:1.6}
 .note-strip i{margin-top:3px;color:var(--blue)}
 .note-strip.warn{background:var(--amber-soft);color:var(--amber)}.note-strip.warn i{color:var(--amber)}
 .ep-block{border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
@@ -585,45 +585,100 @@ const hide=el=>el.classList.add('hidden');
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
 
 // ==== GOOGLE SHEET DATA ====
-const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPFBCl_D5s4WfSM0f9OQW80X3W25Wzoq1V3F54hG9fnqJ2kNdMRzm0buPzbdz1DCz2X713XTH1yNeZ/pub?output=csv';
+const SENT_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPFBCl_D5s4WfSM0f9OQW80X3W25Wzoq1V3F54hG9fnqJ2kNdMRzm0buPzbdz1DCz2X713XTH1yNeZ/pub?output=csv';
+const RECEIVED_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIes2nm9G4mn886-doXN6SDqjeqn0to8Fi-ffxsB4KtIzb6NUy-Fcu_vfuM_UwvwpCGI2qGH3Iog3M/pub?gid=0&single=true&output=csv';
 let sheetData = [];
 let sheetLoaded = false;
 
 async function loadSheetData() {
   try {
-    const res = await fetch(SHEET_CSV);
-    const csv = await res.text();
-    const parsed = Papa.parse(csv, { header: true, skipEmptyLines: true });
-    sheetData = parsed.data.map(row => {
-      const ts = row['Timestamp'] || '';
-      let datePart = '';
-      let timePart = '';
-      if (ts) {
-        const dt = new Date(ts);
-        if (!isNaN(dt.getTime())) {
-          datePart = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
-          timePart = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0') + ':' + String(dt.getSeconds()).padStart(2,'0');
-        } else {
-          const parts = ts.split(/[\sT]+/);
-          datePart = parts[0] || '';
-          timePart = parts[1] || '';
-        }
+    let combinedData = [];
+
+    // 1. Fetch Sent Messages (using updated column headers)
+    if (SENT_SHEET_CSV) {
+      try {
+        const resSent = await fetch(SENT_SHEET_CSV);
+        const csvSent = await resSent.text();
+        const parsedSent = Papa.parse(csvSent, { header: true, skipEmptyLines: true });
+        const sentRows = parsedSent.data.map(row => {
+          const ts = row['Timestamp'] || '';
+          let datePart = '';
+          let timePart = '';
+          if (ts) {
+            const dt = new Date(ts);
+            if (!isNaN(dt.getTime())) {
+              datePart = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+              timePart = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0') + ':' + String(dt.getSeconds()).padStart(2,'0');
+            } else {
+              const parts = ts.split(/[\sT]+/);
+              datePart = parts[0] || '';
+              timePart = parts[1] || '';
+            }
+          }
+          return {
+            timestamp: ts,
+            date: datePart,
+            time: timePart,
+            messageId: row['Message ID'] || '',
+            chatId: row['Phone Number'] || '',
+            phone: row['Phone Number'] || '',
+            pushName: row['Contact Name'] || row['Phone Number'] || '',
+            messageType: (row['Message Type'] || 'text').toLowerCase(),
+            messageText: row['Text Content'] || row['Caption'] || '',
+            fromMe: true,
+            isGroup: false,
+            groupId: ''
+          };
+        });
+        combinedData = combinedData.concat(sentRows);
+      } catch (e) {
+        console.error('Sent sheet load error:', e);
       }
-      return {
-        timestamp: ts,
-        date: datePart,
-        time: timePart,
-        messageId: row['Message ID'] || '',
-        chatId: row['Phone Number'] || '',
-        phone: row['Phone Number'] || '',
-        pushName: row['Contact Name'] || row['Phone Number'] || '',
-        messageType: (row['Message Type'] || 'text').toLowerCase(),
-        messageText: row['Text Content'] || row['Caption'] || '',
-        fromMe: true, // Configured for sent message tracking
-        isGroup: false,
-        groupId: ''
-      };
-    });
+    }
+
+    // 2. Fetch Received Messages (using original column headers)
+    if (RECEIVED_SHEET_CSV) {
+      try {
+        const resRec = await fetch(RECEIVED_SHEET_CSV);
+        const csvRec = await resRec.text();
+        const parsedRec = Papa.parse(csvRec, { header: true, skipEmptyLines: true });
+        const recRows = parsedRec.data.map(row => {
+          const ts = row['Timestamp'] || '';
+          let datePart = row['Date'] || '';
+          let timePart = row['Time'] || '';
+          if (!datePart && ts) {
+            const dt = new Date(ts);
+            if (!isNaN(dt.getTime())) {
+              datePart = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+              timePart = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0') + ':' + String(dt.getSeconds()).padStart(2,'0');
+            } else {
+              const parts = ts.split(/[\sT]+/);
+              datePart = parts[0] || '';
+              timePart = parts[1] || '';
+            }
+          }
+          return {
+            timestamp: ts,
+            date: datePart,
+            time: timePart,
+            messageId: row['Message ID'] || '',
+            chatId: row['Chat ID'] || row['Phone Number'] || '',
+            phone: row['Phone Number'] || '',
+            pushName: row['Push Name'] || row['Contact Name'] || row['Phone Number'] || '',
+            messageType: (row['Message Type'] || 'text').toLowerCase(),
+            messageText: row['Message Text'] || row['Text Content'] || row['Caption'] || '',
+            fromMe: false, // Forced to false to register as incoming messages
+            isGroup: (row['Is Group'] || '').toLowerCase() === 'true',
+            groupId: row['Group ID'] || ''
+          };
+        });
+        combinedData = combinedData.concat(recRows);
+      } catch (e) {
+        console.error('Received sheet load error:', e);
+      }
+    }
+
+    sheetData = combinedData;
     sheetLoaded = true;
     $('sheetStatus').textContent = sheetData.length + ' messages loaded';
     updateDashboardFromSheet();
