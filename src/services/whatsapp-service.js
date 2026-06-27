@@ -1,9 +1,3 @@
-/**
- * Developed by Mohammad Rameez Imdad (Rameez Scripts)
- * WhatsApp: https://wa.me/923224083545 (For Custom Projects)
- * YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
- */
-
 import makeWASocket, {
   Browsers,
   DisconnectReason,
@@ -40,7 +34,6 @@ export class WhatsAppService {
     this.startPromise = null
     this.version = null
     this.qrWaiters = new Set()
-    // anti-ban: one msg at a time, random human-like gap between sends (default 5-9s)
     this.queue = new PQueue({ concurrency: 1 })
     this.nextSendAt = 0
     this.sentInBurst = 0
@@ -91,68 +84,148 @@ export class WhatsAppService {
       },
       markOnlineOnConnect: false,
       syncFullHistory: false,
-      shouldSyncHistoryMessage: () => false, // send-only
+      shouldSyncHistoryMessage: () => false,
       generateHighQualityLinkPreview: false,
       getMessage: async key => key.id ? this.messages.getContent(key.id) : undefined
     })
 
     this.socket = socket
+
     socket.ev.on('creds.update', () => {
       if (generation === this.generation) saveCreds().catch(error => {
         this.logs.write('error', 'whatsapp', 'credential save failed', { error: error.message })
       })
     })
+
     socket.ev.on('connection.update', update => this.onConnectionUpdate(update, generation))
+
+    // ================================================================
+    // MESSAGES HANDLER - WITH @lid RESOLUTION
+    // ================================================================
     socket.ev.on('messages.upsert', async ({ messages, type }) => {
-  if (type !== 'notify') return
+      if (type !== 'notify') return
 
-  const msg = messages?.[0]
-  if (!msg?.message) return
-  if (msg.key.fromMe) return
+      const msg = messages?.[0]
+      if (!msg?.message) return
+      if (msg.key.fromMe) return
 
-  try {
-    const now = new Date()
+      try {
+        const now = new Date()
 
-    const text =
-      msg.message.conversation ||
-      msg.message.extendedTextMessage?.text ||
-      msg.message.imageMessage?.caption ||
-      msg.message.videoMessage?.caption ||
-      ''
+        // Extract message text
+        const text =
+          msg.message.conversation ||
+          msg.message.extendedTextMessage?.text ||
+          msg.message.imageMessage?.caption ||
+          msg.message.videoMessage?.caption ||
+          ''
 
-    const chatId = msg.key.remoteJid || ''
-    const isGroup = chatId.endsWith('@g.us')
+        // Get message type
+        const messageType = Object.keys(msg.message)[0] || 'conversation'
 
-    const phoneNumber = chatId
-      .replace('@s.whatsapp.net', '')
-      .replace('@g.us', '')
+        const chatId  = msg.key.remoteJid || ''
+        const isGroup = chatId.endsWith('@g.us')
 
-    axios.post(GOOGLE_SHEET_WEBHOOK, {
-      timestamp: now.toISOString(),
-      date: now.toISOString().split('T')[0],
-      time: now.toTimeString().split(' ')[0],
+        // ============================================================
+        // @lid RESOLUTION - Find real phone number
+        // ============================================================
+        let sendableJid = chatId    // default = original chatId
+        let phoneNumber = ''
 
-      messageId: msg.key.id,
-      chatId,
-      phoneNumber,
+        if (chatId.endsWith('@lid')) {
+          // This is a linked device message
+          // Need to find the real @s.whatsapp.net JID
+          this.logs.write('info', 'whatsapp', 'resolving @lid to real JID', { chatId })
 
-      pushName: msg.pushName || '',
-      messageType: 'conversation',
-      messageText: text,
+          try {
+            // Method 1: Use socket.onWhatsApp to resolve
+            // Extract digits from @lid
+            const lidDigits = chatId.replace('@lid', '').replace(/[^\d]/g, '')
 
-      fromMe: msg.key.fromMe,
-      isGroup,
-      groupId: isGroup ? chatId : '',
+            // Try resolving with @s.whatsapp.net
+            const [result] = await socket.onWhatsApp(lidDigits + '@s.whatsapp.net')
 
-      instanceName: 'Rameez Baileys API'
-    }).catch(() => {})
-  } catch (err) {
-    this.logs.write('error', 'whatsapp', 'webhook failed', {
-      error: err.message
+            if (result && result.jid) {
+              sendableJid = result.jid
+              this.logs.write('info', 'whatsapp', '@lid resolved successfully', {
+                original : chatId,
+                resolved : sendableJid
+              })
+            } else {
+              // Method 2: Try contact store
+              const contacts = socket.store?.contacts || {}
+              const contact  = contacts[chatId]
+
+              if (contact && contact.notify) {
+                // contact exists but no direct JID mapping
+                sendableJid = chatId // keep @lid, will try sending anyway
+              }
+
+              this.logs.write('warn', 'whatsapp', '@lid could not be resolved', {
+                chatId,
+                tried: lidDigits + '@s.whatsapp.net'
+              })
+            }
+          } catch (resolveError) {
+            // Resolution failed - keep original chatId
+            this.logs.write('warn', 'whatsapp', '@lid resolution failed', {
+              chatId,
+              error: resolveError.message
+            })
+            sendableJid = chatId
+          }
+
+          // Extract phone number from resolved JID
+          phoneNumber = sendableJid
+            .replace('@s.whatsapp.net', '')
+            .replace('@lid', '')
+            .replace(/[^\d]/g, '')
+
+        } else {
+          // Normal @s.whatsapp.net message - extract directly
+          phoneNumber = chatId
+            .replace('@s.whatsapp.net', '')
+            .replace('@g.us', '')
+            .replace(/[^\d]/g, '')
+
+          sendableJid = chatId
+        }
+        // ============================================================
+        // END OF @lid RESOLUTION
+        // ============================================================
+
+        // Send to Google Sheet webhook
+        axios.post(GOOGLE_SHEET_WEBHOOK, {
+          timestamp   : now.toISOString(),
+          date        : now.toISOString().split('T')[0],
+          time        : now.toTimeString().split(' ')[0],
+
+          messageId   : msg.key.id,
+          chatId      : chatId,        // original (for reference)
+          sendableJid : sendableJid,   // ✅ resolved JID (use this to send!)
+          phoneNumber : phoneNumber,   // ✅ clean digits only
+
+          pushName    : msg.pushName || '',
+          messageType : messageType,
+          messageText : text,
+
+          fromMe      : msg.key.fromMe,
+          isGroup,
+          groupId     : isGroup ? chatId : '',
+
+          instanceName: 'Rameez Baileys API'
+        }).catch(webhookError => {
+          this.logs.write('warn', 'whatsapp', 'webhook post failed', {
+            error: webhookError.message
+          })
+        })
+
+      } catch (err) {
+        this.logs.write('error', 'whatsapp', 'message processing failed', {
+          error: err.message
+        })
+      }
     })
-  }
-}) // send-only: inbound dropped, never stored
-    // fire-and-forget: delivery/read receipts are NOT tracked — send and move on
   }
 
   onConnectionUpdate(update, generation) {
@@ -175,7 +248,9 @@ export class WhatsAppService {
       this.lastError = null
       this.reconnectAttempts = 0
       this.resolveQrWaiters()
-      this.logs.write('info', 'whatsapp', 'WhatsApp connected', { user: this.maskUser(this.socket?.user?.id) })
+      this.logs.write('info', 'whatsapp', 'WhatsApp connected', {
+        user: this.maskUser(this.socket?.user?.id)
+      })
       return
     }
 
@@ -203,7 +278,7 @@ export class WhatsAppService {
   scheduleReconnect(fresh) {
     if (this.stopped || this.reconnectTimer) return
     this.status = fresh ? 'connecting' : 'reconnecting'
-    const base = Math.min(1000 * (2 ** this.reconnectAttempts), this.cfg.reconnectMaxDelayMs)
+    const base  = Math.min(1000 * (2 ** this.reconnectAttempts), this.cfg.reconnectMaxDelayMs)
     const delay = fresh ? 1000 : Math.round(base * (0.8 + Math.random() * 0.4))
     this.reconnectAttempts += 1
     this.reconnectTimer = setTimeout(() => {
@@ -244,17 +319,18 @@ export class WhatsAppService {
     return randBetween(this.cfg.messageDelayMinMs ?? 5000, this.cfg.messageDelayMaxMs ?? 9000)
   }
 
-  // every BURST_SIZE messages take a longer breather, like a human would
   burstPauseMs() {
     const size = this.cfg.burstSize ?? 0
     if (!size || ++this.sentInBurst < size) return 0
     this.sentInBurst = 0
     const pause = randBetween(this.cfg.burstPauseMinMs ?? 30000, this.cfg.burstPauseMaxMs ?? 60000)
-    this.logs.write('info', 'whatsapp', 'anti-ban burst cool-down', { pauseMs: pause, afterMessages: size })
+    this.logs.write('info', 'whatsapp', 'anti-ban burst cool-down', {
+      pauseMs       : pause,
+      afterMessages : size
+    })
     return pause
   }
 
-  // show "typing…" briefly before sending, scaled to message length
   async simulateTyping(jid, content) {
     if (!this.cfg.typingSimulation) return
     try {
@@ -275,18 +351,18 @@ export class WhatsAppService {
 
   getStatus() {
     return {
-      status: this.status,
-      connected: this.status === 'connected',
-      user: this.status === 'connected' ? this.maskUser(this.socket?.user?.id) : null,
-      connectedAt: this.connectedAt,
-      qrAvailable: Boolean(this.getQr()),
-      qrExpiresAt: this.getQr()?.expiresAt || null,
-      reconnectAttempts: this.reconnectAttempts,
-      pendingMessages: this.queue.size + this.queue.pending,
-      queueGapMs: { min: this.cfg.messageDelayMinMs ?? 5000, max: this.cfg.messageDelayMaxMs ?? 9000 },
-      sentToday: this.sentToday(),
-      dailyLimit: this.cfg.dailySendLimit ?? 0,
-      lastError: this.lastError
+      status            : this.status,
+      connected         : this.status === 'connected',
+      user              : this.status === 'connected' ? this.maskUser(this.socket?.user?.id) : null,
+      connectedAt       : this.connectedAt,
+      qrAvailable       : Boolean(this.getQr()),
+      qrExpiresAt       : this.getQr()?.expiresAt || null,
+      reconnectAttempts : this.reconnectAttempts,
+      pendingMessages   : this.queue.size + this.queue.pending,
+      queueGapMs        : { min: this.cfg.messageDelayMinMs ?? 5000, max: this.cfg.messageDelayMaxMs ?? 9000 },
+      sentToday         : this.sentToday(),
+      dailyLimit        : this.cfg.dailySendLimit ?? 0,
+      lastError         : this.lastError
     }
   }
 
@@ -302,11 +378,29 @@ export class WhatsAppService {
     }
   }
 
+  // ================================================================
+  // UPDATED resolveRecipient - handles @lid JIDs
+  // ================================================================
   async resolveRecipient(to) {
     const jid = normalizeRecipient(to)
-    if (!this.cfg.checkRecipientExists || jid.endsWith('@g.us')) return jid
+
+    // Skip check for groups
+    if (jid.endsWith('@g.us')) return jid
+
+    // ✅ If @lid - send directly without checking
+    // (we already verified they are on WhatsApp because they messaged us!)
+    if (jid.endsWith('@lid')) {
+      this.logs.write('info', 'whatsapp', 'sending to @lid JID directly', { jid })
+      return jid
+    }
+
+    // Normal number - check if exists (only if config says so)
+    if (!this.cfg.checkRecipientExists) return jid
+
     const [result] = await this.socket.onWhatsApp(jid)
-    if (!result?.exists) throw new AppError(404, 'RECIPIENT_NOT_FOUND', 'Recipient is not registered on WhatsApp')
+    if (!result?.exists) {
+      throw new AppError(404, 'RECIPIENT_NOT_FOUND', 'Recipient is not registered on WhatsApp')
+    }
     return result.jid || jid
   }
 
@@ -314,19 +408,20 @@ export class WhatsAppService {
     await this.ensureConnected()
     const limit = this.cfg.dailySendLimit ?? 0
     if (limit > 0 && this.sentToday() >= limit) {
-      throw new AppError(429, 'DAILY_LIMIT_REACHED', `Daily send limit (${limit}) reached — protects the number from bans; resets at midnight UTC. Raise DAILY_SEND_LIMIT in .env if needed.`)
+      throw new AppError(429, 'DAILY_LIMIT_REACHED',
+        `Daily send limit (${limit}) reached — protects the number from bans; resets at midnight UTC. Raise DAILY_SEND_LIMIT in .env if needed.`)
     }
-    const recipient = await this.resolveRecipient(to)
-    const record = this.messages.create({ recipient, type, payload, apiKeyId })
+    const recipient    = await this.resolveRecipient(to)
+    const record       = this.messages.create({ recipient, type, payload, apiKeyId })
     const queuedBehind = this.queue.size + this.queue.pending
 
     const markFailed = error => {
       this.messages.markFailed(record.id, error.message)
       this.logs.write('error', 'message', 'message send failed', {
-        messageId: record.id,
-        recipient: this.maskUser(recipient),
+        messageId : record.id,
+        recipient : this.maskUser(recipient),
         type,
-        error: error.message
+        error     : error.message
       }, { apiKeyId })
     }
 
@@ -340,20 +435,21 @@ export class WhatsAppService {
       if (!result?.key?.id) throw new Error('WhatsApp did not return a message ID')
       const sent = this.messages.markSent(record.id, result)
       this.logs.write('info', 'message', 'message sent', {
-        messageId: record.id,
-        waMessageId: sent.waMessageId,
-        recipient: this.maskUser(recipient),
+        messageId   : record.id,
+        waMessageId : sent.waMessageId,
+        recipient   : this.maskUser(recipient),
         type
       }, { apiKeyId })
       return { ...sent, recipient, type }
     })
 
-    // bulk requests would outwait the HTTP timeout behind the anti-ban gap;
-    // wait briefly, then hand back "queued" and let it send in the background
     let timer
     const winner = await Promise.race([
       task.then(result => ({ result }), error => ({ error })),
-      new Promise(resolve => { timer = setTimeout(() => resolve(null), 15000); timer.unref?.() })
+      new Promise(resolve => {
+        timer = setTimeout(() => resolve(null), 15000)
+        timer.unref?.()
+      })
     ])
     clearTimeout(timer)
 
@@ -373,13 +469,14 @@ export class WhatsAppService {
     this.reconnectTimer = null
     const socket = this.socket
     ++this.generation
-    this.socket = null
-    this.status = 'logged_out'
-    this.qr = null
+    this.socket      = null
+    this.status      = 'logged_out'
+    this.qr          = null
     this.qrExpiresAt = null
 
     if (socket) {
-      await socket.logout().catch(error => this.logger.warn({ err: error }, 'socket logout failed'))
+      await socket.logout().catch(error =>
+        this.logger.warn({ err: error }, 'socket logout failed'))
       socket.end(new Error('API logout'))
     }
     this.authStore.clear()
