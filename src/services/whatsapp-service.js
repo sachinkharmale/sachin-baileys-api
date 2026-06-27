@@ -9,65 +9,189 @@ import PQueue from 'p-queue'
 import { AppError } from '../utils/errors.js'
 import { normalizeRecipient } from '../utils/recipient.js'
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
-const randBetween = (min, max) => max > min ? min + Math.floor(Math.random() * (max - min + 1)) : min
+const sleep       = ms => new Promise(resolve => setTimeout(resolve, ms))
+const randBetween = (min, max) => max > min
+  ? min + Math.floor(Math.random() * (max - min + 1))
+  : min
+
 const GOOGLE_SHEET_WEBHOOK =
   'https://script.google.com/macros/s/AKfycbx2Fhiu4OTKQLVZxdhd23Oe-RiEwjkUxqj0D7RfwWzvrMIdxcs7Vv-gEJHqCj0S7vLV/exec'
 
 export class WhatsAppService {
   constructor({ authStore, messages, logs, logger, cfg }) {
-    this.authStore = authStore
-    this.messages = messages
-    this.logs = logs
-    this.logger = logger.child({ module: 'whatsapp' }, { level: cfg.baileysLogLevel || 'warn' })
-    this.cfg = cfg
-    this.socket = null
-    this.status = 'stopped'
-    this.qr = null
-    this.qrExpiresAt = null
-    this.lastError = null
-    this.connectedAt = null
+    this.authStore         = authStore
+    this.messages          = messages
+    this.logs              = logs
+    this.logger            = logger.child(
+      { module: 'whatsapp' },
+      { level: cfg.baileysLogLevel || 'warn' }
+    )
+    this.cfg               = cfg
+    this.socket            = null
+    this.status            = 'stopped'
+    this.qr                = null
+    this.qrExpiresAt       = null
+    this.lastError         = null
+    this.connectedAt       = null
     this.reconnectAttempts = 0
-    this.reconnectTimer = null
-    this.generation = 0
-    this.stopped = true
-    this.startPromise = null
-    this.version = null
-    this.qrWaiters = new Set()
-    this.queue = new PQueue({ concurrency: 1 })
-    this.nextSendAt = 0
-    this.sentInBurst = 0
+    this.reconnectTimer    = null
+    this.generation        = 0
+    this.stopped           = true
+    this.startPromise      = null
+    this.version           = null
+    this.qrWaiters         = new Set()
+    this.queue             = new PQueue({ concurrency: 1 })
+    this.nextSendAt        = 0
+    this.sentInBurst       = 0
   }
 
+  // ================================================================
+  // @lid RESOLUTION
+  // Looks up SQLite lid-mapping table to get real phone number
+  // ================================================================
+  getPhoneNumberFromChatId(chatId) {
+    try {
+
+      // ── Normal WhatsApp number ──
+      if (chatId.endsWith('@s.whatsapp.net')) {
+        return {
+          phoneNumber : chatId.replace('@s.whatsapp.net', '').replace(/[^\d]/g, ''),
+          sendableJid : chatId
+        }
+      }
+
+      // ── Group ──
+      if (chatId.endsWith('@g.us')) {
+        return {
+          phoneNumber : chatId.replace('@g.us', '').replace(/[^\d]/g, ''),
+          sendableJid : chatId
+        }
+      }
+
+      // ── Linked Device ──
+      if (chatId.endsWith('@lid')) {
+        const lidDigits = chatId.replace('@lid', '').replace(/[^\d]/g, '')
+        const queryId   = `${lidDigits}_reverse`
+
+        try {
+          const db  = this.authStore.db
+          const row = db.prepare(
+            `SELECT value FROM whatsapp_auth
+             WHERE category = 'lid-mapping'
+             AND id = ?`
+          ).get(queryId)
+
+          if (row && row.value) {
+            let realPhone = row.value
+
+            // Parse JSON if needed
+            try {
+              const parsed = JSON.parse(row.value)
+              if (typeof parsed === 'string')  realPhone = parsed
+              else if (parsed.phone)           realPhone = parsed.phone
+              else if (parsed.number)          realPhone = parsed.number
+              else if (parsed.jid)             realPhone = parsed.jid
+                .replace('@s.whatsapp.net', '')
+              else                             realPhone = String(parsed)
+            } catch { /* not JSON - use raw value */ }
+
+            // Clean digits only
+            realPhone = realPhone
+              .replace('@s.whatsapp.net', '')
+              .replace('@lid', '')
+              .replace(/[^\d]/g, '')
+
+            this.logs.write('info', 'whatsapp', '@lid resolved from SQLite', {
+              chatId,
+              queryId,
+              resolvedPhone: realPhone
+            })
+
+            return {
+              phoneNumber : realPhone,
+              sendableJid : `${realPhone}@s.whatsapp.net`
+            }
+          }
+
+          // Mapping not found
+          this.logs.write('warn', 'whatsapp', '@lid mapping not found', {
+            chatId,
+            queryId
+          })
+
+          return {
+            phoneNumber : lidDigits,
+            sendableJid : chatId
+          }
+
+        } catch (dbError) {
+          this.logs.write('error', 'whatsapp', 'SQLite @lid lookup failed', {
+            chatId,
+            error: dbError.message
+          })
+
+          return {
+            phoneNumber : lidDigits,
+            sendableJid : chatId
+          }
+        }
+      }
+
+      // ── Unknown format ──
+      return {
+        phoneNumber : chatId.replace(/[^\d]/g, ''),
+        sendableJid : chatId
+      }
+
+    } catch (err) {
+      this.logs.write('error', 'whatsapp', 'getPhoneNumberFromChatId failed', {
+        chatId,
+        error: err.message
+      })
+      return {
+        phoneNumber : chatId.replace(/[^\d]/g, ''),
+        sendableJid : chatId
+      }
+    }
+  }
+
+  // ================================================================
+  // START
+  // ================================================================
   async start() {
     if (this.startPromise) return this.startPromise
-    if (this.socket && ['connecting', 'qr_ready', 'connected'].includes(this.status)) return
-    this.stopped = false
+    if (this.socket &&
+      ['connecting', 'qr_ready', 'connected'].includes(this.status)) return
+    this.stopped      = false
     this.startPromise = this.connect()
       .catch(error => {
-        this.status = 'error'
+        this.status    = 'error'
         this.lastError = error.message
-        this.logs.write('error', 'whatsapp', 'connection start failed', { error: error.message })
+        this.logs.write('error', 'whatsapp', 'connection start failed', {
+          error: error.message
+        })
         this.scheduleReconnect(false)
         throw error
       })
-      .finally(() => {
-        this.startPromise = null
-      })
+      .finally(() => { this.startPromise = null })
     return this.startPromise
   }
 
+  // ================================================================
+  // CONNECT
+  // ================================================================
   async connect() {
-    const generation = ++this.generation
-    this.status = this.reconnectAttempts ? 'reconnecting' : 'connecting'
-    const { state, saveCreds } = this.authStore.load()
+    const generation          = ++this.generation
+    this.status               = this.reconnectAttempts ? 'reconnecting' : 'connecting'
+    const { state, saveCreds} = this.authStore.load()
+
     if (!this.version) {
       try {
         const latest = await fetchLatestBaileysVersion()
         this.version = latest.version
         this.logs.write('info', 'whatsapp', 'protocol version resolved', {
-          version: this.version.join('.'),
-          isLatest: latest.isLatest
+          version  : this.version.join('.'),
+          isLatest : latest.isLatest
         })
       } catch (error) {
         this.logger.warn({ err: error }, 'protocol version lookup failed; using Baileys default')
@@ -76,28 +200,33 @@ export class WhatsAppService {
 
     const socket = makeWASocket({
       ...(this.version ? { version: this.version } : {}),
-      logger: this.logger,
-      browser: Browsers.ubuntu('Rameez Baileys API'),
-      auth: {
-        creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, this.logger)
+      logger   : this.logger,
+      browser  : Browsers.ubuntu('Rameez Baileys API'),
+      auth     : {
+        creds : state.creds,
+        keys  : makeCacheableSignalKeyStore(state.keys, this.logger)
       },
-      markOnlineOnConnect: false,
-      syncFullHistory: false,
-      shouldSyncHistoryMessage: () => false,
+      markOnlineOnConnect      : false,
+      syncFullHistory          : false,
+      shouldSyncHistoryMessage : () => false,
       generateHighQualityLinkPreview: false,
-      getMessage: async key => key.id ? this.messages.getContent(key.id) : undefined
+      getMessage: async key => key.id
+        ? this.messages.getContent(key.id)
+        : undefined
     })
 
     this.socket = socket
 
     socket.ev.on('creds.update', () => {
       if (generation === this.generation) saveCreds().catch(error => {
-        this.logs.write('error', 'whatsapp', 'credential save failed', { error: error.message })
+        this.logs.write('error', 'whatsapp', 'credential save failed', {
+          error: error.message
+        })
       })
     })
 
-    socket.ev.on('connection.update', update => this.onConnectionUpdate(update, generation))
+    socket.ev.on('connection.update',
+      update => this.onConnectionUpdate(update, generation))
 
     // ================================================================
     // MESSAGES HANDLER - WITH @lid RESOLUTION
@@ -112,107 +241,39 @@ export class WhatsAppService {
       try {
         const now = new Date()
 
-        // Extract message text
+        // Extract text
         const text =
-          msg.message.conversation ||
-          msg.message.extendedTextMessage?.text ||
-          msg.message.imageMessage?.caption ||
-          msg.message.videoMessage?.caption ||
+          msg.message.conversation                 ||
+          msg.message.extendedTextMessage?.text    ||
+          msg.message.imageMessage?.caption        ||
+          msg.message.videoMessage?.caption        ||
           ''
 
-        // Get message type
+        // Message type
         const messageType = Object.keys(msg.message)[0] || 'conversation'
 
         const chatId  = msg.key.remoteJid || ''
         const isGroup = chatId.endsWith('@g.us')
 
-        // ============================================================
-        // @lid RESOLUTION - Find real phone number
-        // ============================================================
-        let sendableJid = chatId    // default = original chatId
-        let phoneNumber = ''
+        // ── Resolve @lid to real phone number ──
+        const { phoneNumber, sendableJid } = this.getPhoneNumberFromChatId(chatId)
 
-        if (chatId.endsWith('@lid')) {
-          // This is a linked device message
-          // Need to find the real @s.whatsapp.net JID
-          this.logs.write('info', 'whatsapp', 'resolving @lid to real JID', { chatId })
-
-          try {
-            // Method 1: Use socket.onWhatsApp to resolve
-            // Extract digits from @lid
-            const lidDigits = chatId.replace('@lid', '').replace(/[^\d]/g, '')
-
-            // Try resolving with @s.whatsapp.net
-            const [result] = await socket.onWhatsApp(lidDigits + '@s.whatsapp.net')
-
-            if (result && result.jid) {
-              sendableJid = result.jid
-              this.logs.write('info', 'whatsapp', '@lid resolved successfully', {
-                original : chatId,
-                resolved : sendableJid
-              })
-            } else {
-              // Method 2: Try contact store
-              const contacts = socket.store?.contacts || {}
-              const contact  = contacts[chatId]
-
-              if (contact && contact.notify) {
-                // contact exists but no direct JID mapping
-                sendableJid = chatId // keep @lid, will try sending anyway
-              }
-
-              this.logs.write('warn', 'whatsapp', '@lid could not be resolved', {
-                chatId,
-                tried: lidDigits + '@s.whatsapp.net'
-              })
-            }
-          } catch (resolveError) {
-            // Resolution failed - keep original chatId
-            this.logs.write('warn', 'whatsapp', '@lid resolution failed', {
-              chatId,
-              error: resolveError.message
-            })
-            sendableJid = chatId
-          }
-
-          // Extract phone number from resolved JID
-          phoneNumber = sendableJid
-            .replace('@s.whatsapp.net', '')
-            .replace('@lid', '')
-            .replace(/[^\d]/g, '')
-
-        } else {
-          // Normal @s.whatsapp.net message - extract directly
-          phoneNumber = chatId
-            .replace('@s.whatsapp.net', '')
-            .replace('@g.us', '')
-            .replace(/[^\d]/g, '')
-
-          sendableJid = chatId
-        }
-        // ============================================================
-        // END OF @lid RESOLUTION
-        // ============================================================
-
-        // Send to Google Sheet webhook
+        // ── Send to Google Sheet ──
         axios.post(GOOGLE_SHEET_WEBHOOK, {
+          type        : 'message',
           timestamp   : now.toISOString(),
           date        : now.toISOString().split('T')[0],
           time        : now.toTimeString().split(' ')[0],
-
           messageId   : msg.key.id,
-          chatId      : chatId,        // original (for reference)
-          sendableJid : sendableJid,   // ✅ resolved JID (use this to send!)
-          phoneNumber : phoneNumber,   // ✅ clean digits only
-
+          chatId,
+          sendableJid,
+          phoneNumber,
           pushName    : msg.pushName || '',
-          messageType : messageType,
+          messageType,
           messageText : text,
-
           fromMe      : msg.key.fromMe,
           isGroup,
           groupId     : isGroup ? chatId : '',
-
           instanceName: 'Rameez Baileys API'
         }).catch(webhookError => {
           this.logs.write('warn', 'whatsapp', 'webhook post failed', {
@@ -228,24 +289,29 @@ export class WhatsAppService {
     })
   }
 
+  // ================================================================
+  // CONNECTION UPDATE
+  // ================================================================
   onConnectionUpdate(update, generation) {
     if (generation !== this.generation) return
     const { connection, lastDisconnect, qr } = update
 
     if (qr) {
-      this.qr = qr
+      this.qr          = qr
       this.qrExpiresAt = new Date(Date.now() + this.cfg.qrTtlMs).toISOString()
-      this.status = 'qr_ready'
+      this.status      = 'qr_ready'
       this.resolveQrWaiters()
-      this.logs.write('info', 'whatsapp', 'QR code generated', { expiresAt: this.qrExpiresAt })
+      this.logs.write('info', 'whatsapp', 'QR code generated', {
+        expiresAt: this.qrExpiresAt
+      })
     }
 
     if (connection === 'open') {
-      this.status = 'connected'
-      this.connectedAt = new Date().toISOString()
-      this.qr = null
-      this.qrExpiresAt = null
-      this.lastError = null
+      this.status            = 'connected'
+      this.connectedAt       = new Date().toISOString()
+      this.qr                = null
+      this.qrExpiresAt       = null
+      this.lastError         = null
       this.reconnectAttempts = 0
       this.resolveQrWaiters()
       this.logs.write('info', 'whatsapp', 'WhatsApp connected', {
@@ -255,15 +321,19 @@ export class WhatsAppService {
     }
 
     if (connection !== 'close') return
-    const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.data?.statusCode
+
+    const code = lastDisconnect?.error?.output?.statusCode ||
+                 lastDisconnect?.error?.data?.statusCode
     const loggedOut = code === DisconnectReason.loggedOut
-    this.lastError = lastDisconnect?.error?.message || 'Connection closed'
-    this.socket = null
-    this.logs.write(loggedOut ? 'warn' : 'error', 'whatsapp', 'WhatsApp connection closed', {
-      code,
-      loggedOut,
-      error: this.lastError
-    })
+    this.lastError  = lastDisconnect?.error?.message || 'Connection closed'
+    this.socket     = null
+
+    this.logs.write(
+      loggedOut ? 'warn' : 'error',
+      'whatsapp',
+      'WhatsApp connection closed',
+      { code, loggedOut, error: this.lastError }
+    )
 
     if (loggedOut) {
       this.status = 'logged_out'
@@ -275,11 +345,19 @@ export class WhatsAppService {
     this.scheduleReconnect(false)
   }
 
+  // ================================================================
+  // RECONNECT
+  // ================================================================
   scheduleReconnect(fresh) {
     if (this.stopped || this.reconnectTimer) return
     this.status = fresh ? 'connecting' : 'reconnecting'
-    const base  = Math.min(1000 * (2 ** this.reconnectAttempts), this.cfg.reconnectMaxDelayMs)
-    const delay = fresh ? 1000 : Math.round(base * (0.8 + Math.random() * 0.4))
+    const base  = Math.min(
+      1000 * (2 ** this.reconnectAttempts),
+      this.cfg.reconnectMaxDelayMs
+    )
+    const delay = fresh
+      ? 1000
+      : Math.round(base * (0.8 + Math.random() * 0.4))
     this.reconnectAttempts += 1
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
@@ -315,15 +393,24 @@ export class WhatsAppService {
     })
   }
 
+  // ================================================================
+  // ANTI-BAN
+  // ================================================================
   sendGapMs() {
-    return randBetween(this.cfg.messageDelayMinMs ?? 5000, this.cfg.messageDelayMaxMs ?? 9000)
+    return randBetween(
+      this.cfg.messageDelayMinMs ?? 5000,
+      this.cfg.messageDelayMaxMs ?? 9000
+    )
   }
 
   burstPauseMs() {
     const size = this.cfg.burstSize ?? 0
     if (!size || ++this.sentInBurst < size) return 0
     this.sentInBurst = 0
-    const pause = randBetween(this.cfg.burstPauseMinMs ?? 30000, this.cfg.burstPauseMaxMs ?? 60000)
+    const pause = randBetween(
+      this.cfg.burstPauseMinMs ?? 30000,
+      this.cfg.burstPauseMaxMs ?? 60000
+    )
     this.logs.write('info', 'whatsapp', 'anti-ban burst cool-down', {
       pauseMs       : pause,
       afterMessages : size
@@ -338,9 +425,12 @@ export class WhatsAppService {
       const len = (content.text || content.caption || '').length
       await sleep(Math.min(randBetween(900, 1800) + len * 25, 4000))
       await this.socket.sendPresenceUpdate('paused', jid)
-    } catch { /* presence is best-effort */ }
+    } catch { /* best-effort */ }
   }
 
+  // ================================================================
+  // STATUS
+  // ================================================================
   todayStartIso() {
     return new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'
   }
@@ -353,16 +443,21 @@ export class WhatsAppService {
     return {
       status            : this.status,
       connected         : this.status === 'connected',
-      user              : this.status === 'connected' ? this.maskUser(this.socket?.user?.id) : null,
+      user              : this.status === 'connected'
+        ? this.maskUser(this.socket?.user?.id)
+        : null,
       connectedAt       : this.connectedAt,
       qrAvailable       : Boolean(this.getQr()),
       qrExpiresAt       : this.getQr()?.expiresAt || null,
       reconnectAttempts : this.reconnectAttempts,
       pendingMessages   : this.queue.size + this.queue.pending,
-      queueGapMs        : { min: this.cfg.messageDelayMinMs ?? 5000, max: this.cfg.messageDelayMaxMs ?? 9000 },
-      sentToday         : this.sentToday(),
-      dailyLimit        : this.cfg.dailySendLimit ?? 0,
-      lastError         : this.lastError
+      queueGapMs        : {
+        min: this.cfg.messageDelayMinMs ?? 5000,
+        max: this.cfg.messageDelayMaxMs ?? 9000
+      },
+      sentToday  : this.sentToday(),
+      dailyLimit : this.cfg.dailySendLimit ?? 0,
+      lastError  : this.lastError
     }
   }
 
@@ -379,38 +474,47 @@ export class WhatsAppService {
   }
 
   // ================================================================
-  // UPDATED resolveRecipient - handles @lid JIDs
+  // RESOLVE RECIPIENT
   // ================================================================
   async resolveRecipient(to) {
     const jid = normalizeRecipient(to)
 
-    // Skip check for groups
+    // Groups - no check needed
     if (jid.endsWith('@g.us')) return jid
 
-    // ✅ If @lid - send directly without checking
-    // (we already verified they are on WhatsApp because they messaged us!)
+    // @lid - send directly (they already messaged us!)
     if (jid.endsWith('@lid')) {
-      this.logs.write('info', 'whatsapp', 'sending to @lid JID directly', { jid })
+      this.logs.write('info', 'whatsapp', 'sending to @lid directly', { jid })
       return jid
     }
 
-    // Normal number - check if exists (only if config says so)
+    // Skip check if disabled
     if (!this.cfg.checkRecipientExists) return jid
 
+    // Normal number check
     const [result] = await this.socket.onWhatsApp(jid)
     if (!result?.exists) {
-      throw new AppError(404, 'RECIPIENT_NOT_FOUND', 'Recipient is not registered on WhatsApp')
+      throw new AppError(
+        404,
+        'RECIPIENT_NOT_FOUND',
+        'Recipient is not registered on WhatsApp'
+      )
     }
     return result.jid || jid
   }
 
+  // ================================================================
+  // SEND MESSAGE
+  // ================================================================
   async send({ to, type, content, payload, apiKeyId }) {
     await this.ensureConnected()
+
     const limit = this.cfg.dailySendLimit ?? 0
     if (limit > 0 && this.sentToday() >= limit) {
       throw new AppError(429, 'DAILY_LIMIT_REACHED',
-        `Daily send limit (${limit}) reached — protects the number from bans; resets at midnight UTC. Raise DAILY_SEND_LIMIT in .env if needed.`)
+        `Daily send limit (${limit}) reached — resets at midnight UTC.`)
     }
+
     const recipient    = await this.resolveRecipient(to)
     const record       = this.messages.create({ recipient, type, payload, apiKeyId })
     const queuedBehind = this.queue.size + this.queue.pending
@@ -464,15 +568,18 @@ export class WhatsAppService {
     return winner.result
   }
 
+  // ================================================================
+  // LOGOUT
+  // ================================================================
   async logout() {
     clearTimeout(this.reconnectTimer)
     this.reconnectTimer = null
-    const socket = this.socket
+    const socket        = this.socket
     ++this.generation
-    this.socket      = null
-    this.status      = 'logged_out'
-    this.qr          = null
-    this.qrExpiresAt = null
+    this.socket         = null
+    this.status         = 'logged_out'
+    this.qr             = null
+    this.qrExpiresAt    = null
 
     if (socket) {
       await socket.logout().catch(error =>
@@ -486,6 +593,9 @@ export class WhatsAppService {
     return this.getStatus()
   }
 
+  // ================================================================
+  // STOP
+  // ================================================================
   async stop() {
     this.stopped = true
     ++this.generation
